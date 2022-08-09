@@ -39,6 +39,11 @@ export const ContractsContextProvider: React.FunctionComponent = ({ children }) 
     },
     [contractsList, selectedSigner]
   )
+  let call = useCallback(async (params: any) => {
+    await factory?.type.action({ ...factory, params })
+    setActive(false)
+    updateStatus()
+  }, [factory, updateStatus])
   return <ContractsContext.Provider value={
     {
       ERC20Contracts

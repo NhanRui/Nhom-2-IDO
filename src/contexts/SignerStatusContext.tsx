@@ -30,16 +30,7 @@ export const SignerStatusContextProvider: React.FunctionComponent = ({ children 
 
   }, [provider, selectedSigner, updateStatus])
 
-  useEffect(() => {
-    if (selectedSigner) {
-      balance.execute()
-    }
-    if (selectedSigner && name.status === "idle" && symbol.status === "idle") {
-      name.execute()
-      symbol.execute()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSigner])
+  
   return <SignerStatusContext.Provider value={
     {
       status,
