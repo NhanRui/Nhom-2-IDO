@@ -27,6 +27,18 @@ export const TokenInformationComponent: React.FunctionComponent<{ contract: Cont
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSigner])
 
+
+  useEffect(() => {
+    if (selectedSigner) {
+      balance.execute()
+    }
+    if (selectedSigner && name.status === "idle" && symbol.status === "idle") {
+      name.execute()
+      symbol.execute()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSigner])
+
   let bstr = balance.value ? utils.formatEther(balance.value as any).toString() : "..."
 
   return <Pane display={"flex"} alignItems="center" gap={majorScale(1)}>
