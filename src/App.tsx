@@ -1,19 +1,18 @@
 import { useContext } from 'react';
-import { Button, Pane, Text, majorScale, InlineAlert, Heading } from 'evergreen-ui'
+import { Button, Pane, Text, majorScale, Heading } from 'evergreen-ui'
 import { AccountsContext } from './contexts/AccountsContext';
 import "./app.css"
 import { ActualReefComponent, ConnectionStatusComponent, SelectAccountComponent, ReefManageComponent } from './components/SmallComponents';
-import { SignerStatusContext } from './contexts/SignerStatusContext';
 import { TxContext } from './contexts/TxContext';
 import { ClaimEvmTx } from './utils/txFactorys';
 import { TxCallerComponent } from './components/TxCallerComponent';
 import { ContractsContext } from './contexts/ContractsContext';
 import { TokenInformationComponent } from './components/TokenInformationComponent';
 import { ContractDeployerComponent } from './components/ContractDeployerComponent';
+import { StakingControlsComponent } from './components/StakingControlsComponent';
 
 function App() {
   const { selectedSigner } = useContext(AccountsContext);
-  const { status } = useContext(SignerStatusContext)
   const { setTx } = useContext(TxContext)
   const { ERC20Contracts } = useContext(ContractsContext)
   let claimEvm = () => setTx({ args: {}, type: ClaimEvmTx })
@@ -38,6 +37,8 @@ function App() {
         {Array.from(ERC20Contracts.entries()).map(([key, contract]) => <TokenInformationComponent key={key} contract={contract} />)}
         <Heading is="h2" size={700}>Contract Deployer</Heading>
         <ContractDeployerComponent />
+        <Heading is="h2" size={700}>Stacking Controls</Heading>
+        <StakingControlsComponent />
       </Pane>
       <TxCallerComponent />
     </Pane>
