@@ -33,6 +33,21 @@ export const accountToSigner = async (account: InjectedAccountWithMeta, provider
   };
 };
 
+export const accountToMulti = async (account: InjectedAccountWithMeta, provider: Provider, sign: InjectedSigner): Promise<AccountSigner> => {
+  const signer = new Signer(provider, account.address, sign);
+  const evmAddress = await signer.getAddress();
+  const isEvmClaimed = await signer.isClaimed();
+
+  return {
+    signer,
+    evmAddress,
+    isEvmClaimed,
+    name: account.meta.name || '',
+    address: account.address,
+  };
+};
+export const accountsToMultis = async (accounts: InjectedAccountWithMeta[], provider: Provider, sign: InjectedSigner): Promise<AccountSigner[]> => Promise.all(accounts.map((account) => accountToSigner(account, provider, sign)));
+
 export const accountsToSigners = async (accounts: InjectedAccountWithMeta[], provider: Provider, sign: InjectedSigner): Promise<AccountSigner[]> => Promise.all(accounts.map((account) => accountToSigner(account, provider, sign)));
 
 export const AccountsContextProvider: React.FunctionComponent = ({ children }) => {
