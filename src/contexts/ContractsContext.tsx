@@ -42,6 +42,7 @@ export const ContractsContextProvider: React.FunctionComponent = ({ children }) 
     },
     [contractsList, selectedSigner]
   )
+<<<<<<< HEAD
 
   let IDOContracts = useMemo(
     () => {
@@ -51,6 +52,9 @@ export const ContractsContextProvider: React.FunctionComponent = ({ children }) 
     },
     [IDOList, selectedSigner]
   )
+=======
+  
+>>>>>>> 88b24b3878046fc63bf1040664f995c140de64db
   return <ContractsContext.Provider value={
     {
       contractsList,
