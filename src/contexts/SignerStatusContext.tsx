@@ -30,7 +30,6 @@ export const SignerStatusContextProvider: React.FunctionComponent = ({ children 
 
   }, [provider, selectedSigner, updateStatus])
 
-  
   return <SignerStatusContext.Provider value={
     {
       status,

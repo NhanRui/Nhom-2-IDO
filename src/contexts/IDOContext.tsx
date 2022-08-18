@@ -1,8 +1,9 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { BN } from '@polkadot/util';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { BigNumber } from '@ethersproject/bignumber';
 import { IIDO } from '../abis/contracts';
-import { useAsync } from '../utils/hooks';
+import { useAsync, useIntervalUpdate } from '../utils/hooks';
 import { AccountsContext } from './AccountsContext';
+import { TokenContextProvider } from './TokenContext';
 
 export enum IDOStatus {
   Pending,
@@ -10,20 +11,27 @@ export enum IDOStatus {
   Ended
 }
 
-interface InformationInterface {
+export interface InformationInterface {
   tokenAddress: string
   multiplier: number
   divider: number
-  ipfs: BN
-  startingTimestamp: BN
-  endTimestamp: BN
+  ipfs: BigNumber
+  startingTimestamp: BigNumber
+  endTimestamp: BigNumber
   fulfilled: boolean
-  maxSoldBaseAmount: BN
+  maxSoldBaseAmount: BigNumber
 }
 
 interface IDOContextInterface {
   information?: InformationInterface
-  status?: IDOStatus
+  status?: IDOStatus,
+  wei: BigNumber,
+  setWei: React.Dispatch<React.SetStateAction<BigNumber>>
+  onBuy: () => any,
+  onWithdraw: () => any,
+  onGetPayout: () => any,
+  balance: BigNumber,
+  paid: boolean
 }
 
 const timestampToStatus = ({ startingTimestamp, endTimestamp }: InformationInterface): IDOStatus => {
@@ -36,14 +44,22 @@ const timestampToStatus = ({ startingTimestamp, endTimestamp }: InformationInter
 }
 
 export const IDOContext = React.createContext<IDOContextInterface>({
+  wei: BigNumber.from(0),
+  setWei: () => { },
+  onBuy: () => { },
+  onWithdraw: () => { },
+  onGetPayout: () => { },
+  balance: BigNumber.from(0),
+  paid: false
 });
 
 export const IDOContextProvider: React.FunctionComponent<{ address: string }> = ({ children, address }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [update, setUpdate] = useState<number>(0);
   const { selectedSigner } = useContext(AccountsContext);
+  const [wei, setWei] = useState<BigNumber>(BigNumber.from(0));
   let contract = selectedSigner ? IIDO(address).connect(selectedSigner.signer as any) : undefined;
-  const { execute: informationExecute, status: informationStatus, value: information } = useAsync(() => contract!.information(), false);
+  const { execute: informationExecute, status: informationStatus, value: information } = useAsync<any>(() => contract!.information(), false);
+  const { execute: balanceExecute, status: balanceStatus, value: balanceValue } = useAsync<any>(() => contract!.boughtAmount(selectedSigner!.evmAddress), false);
+  const { execute: paidExecute, status: paidStatus, value: paidValue } = useAsync<boolean>(() => contract!.beenPaid(selectedSigner!.evmAddress), false);
 
   useEffect(() => {
     if (selectedSigner && informationStatus === "idle") {
@@ -51,21 +67,53 @@ export const IDOContextProvider: React.FunctionComponent<{ address: string }> = 
     }
   }, [informationStatus, selectedSigner, informationExecute])
 
+  let onBuy = useCallback(async () => {
+    await contract!.buy(wei, { value: wei })
+    balanceExecute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract, wei])
+
+  let onWithdraw = useCallback(async () => {
+    await contract!.withdraw(wei);
+    balanceExecute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract, wei])
+
+  let onGetPayout = useCallback(async () => {
+    await contract!.getPayout();
+    paidExecute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract, wei])
+
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setUpdate(Math.random());
-    }, 1000)
-    return () => clearInterval(intervalId);
-  }, [])
+    if (selectedSigner && balanceStatus === "idle") {
+      balanceExecute();
+    }
+  }, [selectedSigner, balanceStatus, balanceExecute])
+
+  useEffect(() => {
+    if (selectedSigner && paidStatus === "idle") {
+      paidExecute();
+    }
+  }, [selectedSigner, paidStatus, paidExecute])
+
+  useIntervalUpdate();
 
   const status = information ? timestampToStatus((information as InformationInterface)) : undefined;
-
   const value = useMemo(() => ({
     information: (information as InformationInterface),
-    status
-  }), [information, status])
+    status,
+    wei,
+    setWei,
+    onBuy,
+    onWithdraw,
+    onGetPayout,
+    paid: !!paidValue,
+    balance: balanceValue || BigNumber.from(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [information, status, wei, setWei, balanceValue, paidValue])
 
-  return <IDOContext.Provider value={value} >
-    {children}
+  return <IDOContext.Provider value={value}>
+    {information?.tokenAddress ? <TokenContextProvider address={information.tokenAddress} children={children} /> : children}
   </IDOContext.Provider >
 }

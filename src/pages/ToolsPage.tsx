@@ -1,4 +1,5 @@
 import { FunctionComponent, useContext } from "react";
+import { Stack } from "@chakra-ui/react"
 import { Heading, Pane, majorScale, Button, Text } from "evergreen-ui";
 import { ContractDeployerComponent } from "../components/ContractDeployerComponent";
 import { ContractListEditorComponent } from "../components/ListEditorComponent";
@@ -11,15 +12,13 @@ import { TxContext } from "../contexts/TxContext";
 import { ClaimEvmTx } from "../utils/txFactorys";
 import { IDOListcomponent } from "../components/IDOListComponent";
 
-
-
 export const ToolsPage: FunctionComponent = () => {
   const { selectedSigner } = useContext(AccountsContext);
   const { setTx } = useContext(TxContext)
   const { ERC20Contracts } = useContext(ContractsContext)
   let claimEvm = () => setTx({ args: {}, type: ClaimEvmTx })
 
-  return <>
+  return <Stack margin={2}>
     <Heading is="h2" size={700}>Account information</Heading>
     <Pane display={"flex"} alignItems="center" gap={majorScale(1)}>
       <ReefManageComponent />
@@ -38,6 +37,6 @@ export const ToolsPage: FunctionComponent = () => {
     <ContractListEditorComponent />
     <Heading is="h2" size={700}>IDO list</Heading>
     <IDOListcomponent />
-  </>
+  </Stack>
 
 }

@@ -60,6 +60,7 @@ export const useAsync = <T, E = string>(
         setStatus("success");
       })
       .catch((error: any) => {
+        console.log(error);
         setError(error);
         setStatus("error");
       });
@@ -74,3 +75,33 @@ export const useAsync = <T, E = string>(
   }, [execute, immediate]);
   return { execute, status, value, error };
 };
+
+export const useToggle = (initialState: boolean = false): readonly [boolean, () => void, () => void, () => void] => {
+  const [state, setState] = useState<boolean>(initialState);
+
+  const toggle = useCallback((): void => setState(state => !state), []);
+  const setTrue = useCallback((): void => setState(true), []);
+  const setFalse = useCallback((): void => setState(false), []);
+  return [state, toggle, setTrue, setFalse] as const;
+}
+
+export const useIntervalUpdate = (miliseconds: number = 1000) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [update, setUpdate] = useState<number>(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setUpdate(Math.random());
+    }, miliseconds)
+    return () => clearInterval(intervalId);
+  }, [setUpdate, miliseconds])
+}
+
+export const useCallbackAsync = (ex: (...params: any[]) => Promise<any>, execute: boolean, deps: React.DependencyList) => {
+  useEffect(() => {
+    if (execute) {
+      ex();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+}

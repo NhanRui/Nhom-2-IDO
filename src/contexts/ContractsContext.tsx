@@ -51,7 +51,6 @@ export const ContractsContextProvider: React.FunctionComponent = ({ children }) 
     },
     [IDOList, selectedSigner]
   )
-  
   return <ContractsContext.Provider value={
     {
       contractsList,

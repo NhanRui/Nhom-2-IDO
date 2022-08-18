@@ -24,17 +24,7 @@ export const ConnectionStatusComponent = () => {
   const { connected } = useContext(NetworkContext);
   return (connected ? <InlineAlert marginX={majorScale(2)} intent="success" children="Connected" /> : <InlineAlert intent="danger" children="Disconnected" />)
 }
-export const SelectAccountComponent2 = () => {
-  const { signers, selectedSigner, setSelectedSigner } = useContext(AccountsContext);
-  return <Select maxWidth={130} minWidth={130} value={selectedSigner?.address} onChange={event => setSelectedSigner(signers?.find(sig => sig.address === event.target.value))}>
-    {signers && signers.map((signer, id) => <option value={signer.address} key={id} >{stringShorten(signer.address, 5)}</option>)}
-  </Select>
-}
 
-export const ConnectionStatusComponent3 = () => {
-  const { connected } = useContext(NetworkContext);
-  return (connected ? <InlineAlert marginX={majorScale(2)} intent="success" children="Connected" /> : <InlineAlert intent="danger" children="Disconnected" />)
-}
 export const ReefManageComponent = () => {
   const { status } = useContext(SignerStatusContext)
   const { setTx } = useContext(TxContext)
@@ -43,6 +33,4 @@ export const ReefManageComponent = () => {
     <Text>REEF: {status?.freeBalance.toHuman() || " "}</Text>
     <Button onClick={transfer}>Transfer</Button>
   </>
-
-
 }

@@ -3,26 +3,27 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../erc20/ERC20Entangled.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IIDO.sol";
 
-contract BasicIdo is IIDO {
-    bool private _fulfilled = false;
-    IERC20 private _tokenAddress;
+contract BasicIdo is IIDO, Ownable {
+    ERC20Entangled private _tokenAddress;
     uint32 private _multiplier;
     uint32 private _divider;
-    uint256 private _ipfs;
+    uint256 private _ipfs = 0;
     uint256 private _startTimestamp;
     uint256 private _endTimestamp;
     uint256 private _maxSoldBaseAmount;
     uint256 private _boughtCounter = 0;
     mapping(address => uint256) private _bought;
+    mapping(address => bool) private _beenPaid;
 
     constructor(
-        address tokenAddress,
+        string memory tokenName,
+        string memory tokenSymbol,
         uint32 multiplier,
         uint32 divider,
-        uint256 ipfs,
         uint256 startTimestamp,
         uint256 endTimestamp,
         uint256 maxSoldBaseAmount
@@ -32,10 +33,9 @@ contract BasicIdo is IIDO {
             startTimestamp < endTimestamp,
             "start time should be before end time"
         );
-        _tokenAddress = IERC20(tokenAddress);
+        _tokenAddress = new ERC20Entangled(tokenName, tokenSymbol);
         _multiplier = multiplier;
         _divider = divider;
-        _ipfs = ipfs;
         _startTimestamp = startTimestamp;
         _endTimestamp = endTimestamp;
         _maxSoldBaseAmount = maxSoldBaseAmount;
@@ -52,8 +52,7 @@ contract BasicIdo is IIDO {
             uint256 ipfs,
             uint256 startingTimestamp,
             uint256 endTimestamp,
-            uint256 maxSoldBaseAmount,
-            bool fulfilled
+            uint256 maxSoldBaseAmount
         )
     {
         return (
@@ -63,8 +62,7 @@ contract BasicIdo is IIDO {
             _ipfs,
             _startTimestamp,
             _endTimestamp,
-            _maxSoldBaseAmount,
-            _fulfilled
+            _maxSoldBaseAmount
         );
     }
 
@@ -78,23 +76,22 @@ contract BasicIdo is IIDO {
         returns (bool status)
     {
         return
-            _fulfilled &&
             (block.timestamp >= _startTimestamp) &&
             (block.timestamp < _endTimestamp) &&
             (_boughtCounter < _maxSoldBaseAmount);
     }
 
     function _availableToBuy() private view returns (uint256 quantity) {
-        return _boughtCounter - _maxSoldBaseAmount;
+        return _maxSoldBaseAmount - _boughtCounter;
     }
 
     /**
-     * @dev Buys the base amount in gwei, Fails on unsuccessful tx.
+     * @dev Buys the base amount in wei, Fails on unsuccessful tx.
      */
     function buy(uint256 amount) public payable override {
-        require(msg.value == amount, "Non matching gwei");
+        require(msg.value == amount, "Non matching wei");
         require(canBuy(msg.sender), "Can't buy");
-        require(amount >= _availableToBuy(), "Not enough available to buy");
+        require(amount <= _availableToBuy(), "Not enough available to buy");
         _bought[msg.sender] += amount;
         _boughtCounter += amount;
         emit Bought(msg.sender, amount);
@@ -107,6 +104,7 @@ contract BasicIdo is IIDO {
         require(_bought[msg.sender] >= amount, "Not enough bought");
         _bought[msg.sender] -= amount;
         _boughtCounter -= amount;
+        payable(msg.sender).transfer(amount);
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -121,28 +119,42 @@ contract BasicIdo is IIDO {
      * @dev Get's the payout, but in a specific address.
      */
     function getPayoutOn(address otherAddress) public override {
-        uint256 amount = _bought[otherAddress];
+        uint256 amount = _bought[msg.sender];
         require(amount > 0, "Nothing to pay");
-        require(block.timestamp >= _endTimestamp, "IDO still open");
-        _tokenAddress.transfer(otherAddress, amount);
-        _bought[otherAddress] = 0;
+        require(!_beenPaid[msg.sender], "Already paid");
+        require(block.timestamp >= _endTimestamp, "Crowdsale still open");
+        _tokenAddress.mint(otherAddress, (amount * _multiplier) / _divider);
+        _beenPaid[msg.sender] = true;
+    }
+
+    /**
+     * @dev Get's the payout, but in a specific address.
+     */
+    function beenPaid(address otherAddress)
+        public
+        view
+        override
+        returns (bool paid)
+    {
+        return _beenPaid[msg.sender];
+    }
+
+    /**
+     * @dev Empties the contract wei and sends it to the owner
+     */
+    function getRaised() public override onlyOwner {
+        payable(msg.sender).transfer(address(this).balance);
     }
 
     /**
      * @dev Returns the amount of tokens owned by `account`.
      */
-    function balanceOf(address account) public view override returns (uint256) {
+    function boughtAmount(address account)
+        public
+        view
+        override
+        returns (uint256)
+    {
         return _bought[account];
-    }
-
-    /**
-     * @dev Fulfills the contract, Fails on unsuccessful tx.
-     */
-    function fulfill() public override {
-        _tokenAddress.transferFrom(
-            msg.sender,
-            address(this),
-            _maxSoldBaseAmount
-        );
     }
 }

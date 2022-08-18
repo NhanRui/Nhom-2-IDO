@@ -20,8 +20,7 @@ interface IIDO {
             uint256 ipfs,
             uint256 startingTimestamp,
             uint256 endTimestamp,
-            uint256 maxSoldBaseAmount,
-            bool fulfilled
+            uint256 maxSoldBaseAmount
         );
 
     /**
@@ -50,14 +49,16 @@ interface IIDO {
     function getPayoutOn(address otherAddress) external;
 
     /**
-     * @dev Fulfills the contract, Fails on unsuccessful tx.
-     */
-    function fulfill() external;
-
-    /**
      * @dev Returns the amount of tokens owned by `account`.
      */
-    function balanceOf(address account) external view returns (uint256);
+    function boughtAmount(address account) external view returns (uint256);
+
+    /**
+     * @dev Get's the payout, but in a specific address.
+     */
+    function beenPaid(address otherAddress) external view returns (bool paid);
+
+    function getRaised() external;
 
     /**
      * @dev Emitted when a user buys

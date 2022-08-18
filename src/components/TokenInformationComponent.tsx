@@ -27,9 +27,6 @@ export const TokenInformationComponent: React.FunctionComponent<{ contract: Cont
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSigner])
 
-
-  
-
   let bstr = balance.value ? utils.formatEther(balance.value as any).toString() : "..."
 
   return <Pane display={"flex"} alignItems="center" gap={majorScale(1)}>
