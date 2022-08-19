@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Layout } from './App';
 import reportWebVitals from './reportWebVitals';
+import { ApolloProvider } from '@apollo/client';
 import { NetworkContextProvider } from './contexts/NetworkContext';
 import { AccountsContextProvider } from './contexts/AccountsContext';
 import { SignerStatusContextProvider } from './contexts/SignerStatusContext';
@@ -9,22 +10,28 @@ import { TxContextProvider } from './contexts/TxContext';
 import { ContractsContextProvider } from './contexts/ContractsContext';
 import { ChakraProvider } from '@chakra-ui/react';
 import { appTheme } from './utils/chakraTheme';
+import { IDOsContextProvider } from './contexts/IDOsContext';
+import { apolloClientInstance } from './utils/apolloClient';
 
 ReactDOM.render(
   <React.StrictMode>
-    <ChakraProvider theme={appTheme}>
-      <NetworkContextProvider>
-        <AccountsContextProvider>
-          <SignerStatusContextProvider>
-            <TxContextProvider>
-              <ContractsContextProvider>
-                <Layout />
-              </ContractsContextProvider>
-            </TxContextProvider>
-          </SignerStatusContextProvider>
-        </AccountsContextProvider>
-      </NetworkContextProvider>
-    </ChakraProvider>
+    <ApolloProvider client={apolloClientInstance}>
+      <ChakraProvider theme={appTheme}>
+        <NetworkContextProvider>
+          <AccountsContextProvider>
+            <SignerStatusContextProvider>
+              <IDOsContextProvider>
+                <TxContextProvider>
+                  <ContractsContextProvider>
+                    <Layout />
+                  </ContractsContextProvider>
+                </TxContextProvider>
+              </IDOsContextProvider>
+            </SignerStatusContextProvider>
+          </AccountsContextProvider>
+        </NetworkContextProvider>
+      </ChakraProvider>
+    </ApolloProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

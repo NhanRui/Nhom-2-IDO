@@ -1,5 +1,7 @@
 import { BigNumber } from "ethers";
 import { useState, useCallback } from "react";
+import { IDORange } from "./contractTypes";
+import { InformationInterface, IDOStatus } from "./types";
 
 export const ensure = (condition: boolean, message: string): void => {
   if (!condition) {
@@ -38,3 +40,19 @@ export const ratioToMulDiv = (n: number): [number, number] => {
 }
 
 export const timestampToDate = (timestamp: BigNumber) => new Date(timestamp.toNumber() * 1000)
+
+export const timestampToStatus = ({ startingTimestamp, endTimestamp }: InformationInterface): IDOStatus => {
+  let start = startingTimestamp.toNumber();
+  let end = endTimestamp.toNumber();
+  let timestampNow = Math.floor(Date.now() / 1000);
+  if (timestampNow < start) return IDOStatus.Pending;
+  if (timestampNow < end) return IDOStatus.Open;
+  return IDOStatus.Ended;
+}
+
+export const rangeToStatus = ({ start, end }: IDORange): IDOStatus => {
+  let timestampNow = Math.floor(Date.now() / 1000);
+  if (timestampNow < start.toNumber()) return IDOStatus.Pending;
+  if (timestampNow < end.toNumber()) return IDOStatus.Open;
+  return IDOStatus.Ended;
+}

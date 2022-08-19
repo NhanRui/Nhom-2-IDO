@@ -4,14 +4,14 @@ import { ActualReefComponent, ConnectionStatusComponent, SelectAccountComponent 
 import { TxCallerComponent } from './components/TxCallerComponent';
 import { ToolsPage } from './pages/ToolsPage';
 import { IDOShowPage } from './pages/IDOShowPage';
-
-import "./app.css"
 import { MenuComponent } from "./components/MenuComponent";
 import { HomePage } from "./pages/HomePage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { DocumentationPage } from "./pages/DocumentationPage";
 import { MyAccountPage } from "./pages/MyAccountPage";
 import { PublishPage } from "./pages/PublishPage";
+import { PublishDescriptionPage } from "./pages/PublishDescriptionPage";
+import "./app.css"
 
 export const Layout = () => {
   return (
@@ -44,6 +44,9 @@ export const Layout = () => {
               </Route>
               <Route exact path="/publish">
                 <PublishPage />
+              </Route>
+              <Route exact path="/publish/:id/description">
+                <PublishDescriptionPage />
               </Route>
               <Route exact path="/settings">
                 <ToolsPage />

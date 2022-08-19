@@ -1,5 +1,6 @@
 
 import { Signer } from '@reef-defi/evm-provider';
+import { BigNumber } from 'ethers';
 
 export interface Keypair {
   publicKey: Uint8Array;
@@ -44,6 +45,34 @@ export interface PublishValues {
   tokenSymbol: string;
   reefAmount: number;
   reefMultiplier: number;
+  reefMaxPerAddress: number;
   start: string;
   end: string;
+}
+
+export enum IDOStatus {
+  Pending,
+  Open,
+  Ended
+}
+
+export interface InformationInterface {
+  tokenAddress: string
+  multiplier: number
+  divider: number
+  startingTimestamp: BigNumber
+  endTimestamp: BigNumber
+  fulfilled: boolean
+  maxSoldBaseAmount: BigNumber
+  ipfsDigest: string
+  ipfsHashFunction: number
+  ipfsSize: number
+}
+
+export interface FullIDOInfo { address: string, info: InformationInterface }
+
+export interface IPFSIDO {
+  title: string,
+  subtitle: string,
+  description: string
 }

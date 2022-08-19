@@ -179,9 +179,7 @@ export const ContractBasicIDOTX: TxType = {
     }
   ],
   action: async ({ params: { tokenAddress, ratio, start, end, baseAmount }, args: { contract, onSuccess } }) => {
-    let [mul, div] = ratioToMulDiv(parseFloat(ratio));
-    let timestampNow = Math.floor(Date.now() / 1000);
-    let { address } = await contract.deploy(tokenAddress, mul, div, 1, timestampNow + parseInt(start), timestampNow + parseInt(end), utils.parseEther(baseAmount));
+    let { address } = await contract.deploy();
     onSuccess(address);
   }
 }
@@ -214,8 +212,21 @@ export const WithdrawTX: TxType = {
 
 let timestampFromDate = (date: Date) => Math.floor(date.valueOf() / 1000);
 
-export const ContractBasicIDOAction = async (contract: any, { tokenName, tokenSymbol, reefAmount, reefMultiplier, start, end }: PublishValues) => {
+export const ContractBasicIDOAction = async (contract: any, { tokenName, tokenSymbol, reefAmount, reefMultiplier, reefMaxPerAddress, start, end }: PublishValues) => {
   let [mul, div] = ratioToMulDiv(reefMultiplier);
-  let { address } = await contract.deploy(tokenName, tokenSymbol, mul, div, timestampFromDate(new Date(start)), timestampFromDate(new Date(end)), utils.parseEther(reefAmount.toString()));
+  let { address } = await contract.publish(
+    tokenName,
+    tokenSymbol,
+    [
+      true,
+      "0x0000000000000000000000000000000000000000",
+      [mul, div],
+      ["0x65b57eb7111c51b539ee694a5dd5f893e3f1ae4f7d47b6c31fb5903c9c8e7141", 18, 32],
+      [timestampFromDate(new Date(start)), timestampFromDate(new Date(end))],
+      utils.parseEther(reefAmount.toString()),
+      utils.parseEther(reefMaxPerAddress.toString()),
+      0
+    ]
+  );
   return address;
 }
