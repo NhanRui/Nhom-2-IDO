@@ -46,6 +46,7 @@ export interface PublishValues {
   reefAmount: number;
   reefMultiplier: number;
   reefMaxPerAddress: number;
+  swdWhitelisting: number;
   start: string;
   end: string;
 }
@@ -75,4 +76,10 @@ export interface IPFSIDO {
   title: string,
   subtitle: string,
   description: string
+}
+
+export interface VestingForm {
+  beneficiary: string;
+  amount: number;
+  timestamp: string;
 }

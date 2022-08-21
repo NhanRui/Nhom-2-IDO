@@ -56,3 +56,7 @@ export const rangeToStatus = ({ start, end }: IDORange): IDOStatus => {
   if (timestampNow < end.toNumber()) return IDOStatus.Open;
   return IDOStatus.Ended;
 }
+
+export const addressFormat = (address: string): string => `${address.substr(0, 5)}...${address.substr(38, 4)}`
+
+export const zeroAddress = "0x0000000000000000000000000000000000000000"

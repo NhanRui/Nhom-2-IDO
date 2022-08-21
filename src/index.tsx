@@ -6,12 +6,11 @@ import { ApolloProvider } from '@apollo/client';
 import { NetworkContextProvider } from './contexts/NetworkContext';
 import { AccountsContextProvider } from './contexts/AccountsContext';
 import { SignerStatusContextProvider } from './contexts/SignerStatusContext';
-import { TxContextProvider } from './contexts/TxContext';
-import { ContractsContextProvider } from './contexts/ContractsContext';
 import { ChakraProvider } from '@chakra-ui/react';
 import { appTheme } from './utils/chakraTheme';
 import { IDOsContextProvider } from './contexts/IDOsContext';
 import { apolloClientInstance } from './utils/apolloClient';
+import { LockingContextProvider } from './contexts/LockingContext';
 
 ReactDOM.render(
   <React.StrictMode>
@@ -20,19 +19,17 @@ ReactDOM.render(
         <NetworkContextProvider>
           <AccountsContextProvider>
             <SignerStatusContextProvider>
-              <IDOsContextProvider>
-                <TxContextProvider>
-                  <ContractsContextProvider>
-                    <Layout />
-                  </ContractsContextProvider>
-                </TxContextProvider>
-              </IDOsContextProvider>
+              <LockingContextProvider>
+                <IDOsContextProvider>
+                  <Layout />
+                </IDOsContextProvider>
+              </LockingContextProvider>
             </SignerStatusContextProvider>
           </AccountsContextProvider>
         </NetworkContextProvider>
       </ChakraProvider>
     </ApolloProvider>
-  </React.StrictMode>,
+  </React.StrictMode >,
   document.getElementById('root')
 );
 

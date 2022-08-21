@@ -22,6 +22,7 @@ export interface IDOParams {
   multiplier: Multiplier;
   ipfs: IPFSMultihash;
   open: IDORange;
+  minimumLockedAmount: BigNumber;
   baseAmount: BigNumber;
   maxAmountPerAddress: BigNumber;
   totalBought: BigNumber;
@@ -32,4 +33,11 @@ export interface IDO {
   owner: string;
   paidToOwner: BigNumber;
   id?: number;
+}
+
+export interface Vesting {
+  beneficiary: string;
+  amount: BigNumber;
+  timestamp: BigNumber;
+  claimed: boolean;
 }

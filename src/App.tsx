@@ -1,7 +1,6 @@
 import { Box, Stack } from "@chakra-ui/react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import { ActualReefComponent, ConnectionStatusComponent, SelectAccountComponent } from './components/SmallComponents';
-import { TxCallerComponent } from './components/TxCallerComponent';
 import { ToolsPage } from './pages/ToolsPage';
 import { IDOShowPage } from './pages/IDOShowPage';
 import { MenuComponent } from "./components/MenuComponent";
@@ -11,6 +10,7 @@ import { DocumentationPage } from "./pages/DocumentationPage";
 import { MyAccountPage } from "./pages/MyAccountPage";
 import { PublishPage } from "./pages/PublishPage";
 import { PublishDescriptionPage } from "./pages/PublishDescriptionPage";
+import { LockingPage } from "./pages/LockingPage";
 import "./app.css"
 
 export const Layout = () => {
@@ -33,11 +33,14 @@ export const Layout = () => {
               <Route exact path="/projects">
                 <ProjectsPage />
               </Route>
-              <Route path="/ido/:tx">
+              <Route path="/projects/:tx">
                 <IDOShowPage />
               </Route>
               <Route exact path="/my-account">
                 <MyAccountPage />
+              </Route>
+              <Route exact path="/locking">
+                <LockingPage />
               </Route>
               <Route exact path="/docs">
                 <DocumentationPage />
@@ -54,7 +57,6 @@ export const Layout = () => {
             </Switch>
           </Box>
         </Box>
-        <TxCallerComponent />
       </Stack>
     </Router >
   );

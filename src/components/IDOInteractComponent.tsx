@@ -2,35 +2,44 @@
 import { FunctionComponent, useCallback, useContext, useState } from "react";
 import { utils, BigNumber } from "ethers";
 import { formatDistanceStrict } from "date-fns";
-import { Stat, StatLabel, StatNumber, Box, Stack, InputGroup, InputLeftAddon, Input, Button } from "@chakra-ui/react"
+import { Stat, StatLabel, StatNumber, Box, Stack, InputGroup, InputLeftAddon, Input, Button, useBoolean } from "@chakra-ui/react"
 import { IDOInteractContext } from "../contexts/IDOInteractContext";
 import { TokenContext } from "../contexts/TokenContext";
-import { useToggle, useIntervalUpdate } from "../utils/hooks";
+import { useIntervalUpdate } from "../utils/hooks";
 import { timestampToDate } from "../utils/utils";
 import { IDOStatus } from "../utils/types";
 import { IDOContext } from "../contexts/IDOContext";
+import { AccountsContext } from "../contexts/AccountsContext";
 
 const { parseEther, formatEther } = utils;
 
 const useWeiConversion = (value: BigNumber, setWei: React.Dispatch<React.SetStateAction<BigNumber>>, multiplier: number, divisor: number) => {
-  const [to, setTo] = useState<BigNumber>(value.mul(multiplier).div(divisor));
+  const [fromInput, setFromInput] = useState<string>("")
+  const [toInput, setToInput] = useState<string>("")
   const setFromString = useCallback((value: string) => {
-    let wei = parseEther(value);
-    setWei(wei);
-    setTo(wei.mul(multiplier).div(divisor))
+    setFromInput(value);
+    try {
+      let wei = parseEther(value);
+      setWei(wei);
+      setToInput(formatEther(wei.mul(multiplier).div(divisor)))
+    } catch (e) { }
   }, [setWei, divisor, multiplier])
   const setToString = useCallback((value: string) => {
-    let wei = parseEther(value);
-    setTo(wei);
-    setWei(wei.div(multiplier).mul(divisor))
+    setToInput(value)
+    try {
+      let wei = parseEther(value);
+      setWei(wei);
+      setFromInput(formatEther(wei.div(multiplier).mul(divisor)))
+    } catch (e) { }
   }, [setWei, divisor, multiplier])
-  return [formatEther(value), formatEther(to), setFromString, setToString] as const
+  return [fromInput, toInput, setFromString, setToString] as const
 }
 
 const ActionButtonComponent: FunctionComponent<{ action: () => any, actionName: string }> = ({ action, actionName }) => {
+  const { selectedSigner } = useContext(AccountsContext);
   const { IDO: { params: { open: { start } } } } = useContext(IDOContext);
   const { status } = useContext(IDOInteractContext);
-  const disabled = status === IDOStatus.Pending || status === IDOStatus.Ended;
+  const disabled = status === IDOStatus.Pending || status === IDOStatus.Ended || selectedSigner === undefined;
   let text = "";
   if (status === IDOStatus.Pending)
     text = `Opens in ${formatDistanceStrict(Date.now(), timestampToDate(start))}`;
@@ -68,10 +77,10 @@ const BuyConversorComponent: FunctionComponent = () => {
 }
 
 export const IDOInteractComponent = () => {
-  const { IDO: { params: { multiplier } } } = useContext(IDOContext);
+  const { IDO: { params: { multiplier, totalBought, baseAmount } } } = useContext(IDOContext);
   const { status, onBuy, onWithdraw, balance, paid, onGetPayout } = useContext(IDOInteractContext);
   const { symbol } = useContext(TokenContext);
-  const [buying, _, setBuying, setWithdrawing] = useToggle(true);
+  const [buying, { on: setBuying, off: setWithdrawing }] = useBoolean(true);
 
   if (status !== IDOStatus.Ended)
     return <Box borderRadius="md" borderColor={"app.400"} borderWidth={"1px"} w={480} alignSelf={"flex-start"} display={"flex"} flexDirection={"column"} padding={2} boxSizing={"border-box"} flexShrink={0}>
@@ -95,6 +104,9 @@ export const IDOInteractComponent = () => {
           action={buying ? onBuy : onWithdraw}
           actionName={buying ? "Buy" : "Withdraw"}
         />
+        <Box border={"1px"} borderColor={"app.600"} borderRadius={8} bg={"app.100"}>
+          <Box width={`${totalBought.mul(10000).div(baseAmount).toNumber() / 100}%`} bg={"app.600"} height={2} />
+        </Box>
       </Stack>
     </Box >
 

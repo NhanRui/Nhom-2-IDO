@@ -5,7 +5,15 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../erc20/ERC20Entangled.sol";
+import "../locking/ILockedAmount.sol";
 import "./IIDO.sol";
+
+struct Vesting {
+    address beneficiary;
+    uint256 amount;
+    uint256 timestamp;
+    bool claimed;
+}
 
 struct IPFSMultihash {
     bytes32 digest;
@@ -29,6 +37,7 @@ struct IDOParams {
     Multiplier multiplier;
     IPFSMultihash ipfs;
     Range open;
+    uint256 minimumLockedAmount;
     uint256 baseAmount;
     uint256 maxAmountPerAddress;
     uint256 totalBought;
@@ -40,6 +49,8 @@ struct IDO {
     uint256 paidToOwner;
 }
 
+uint256 constant MAX_VESTING_OCURRENCES = 16;
+
 function _isValidMultiplier(Multiplier memory multiplier) pure returns (bool) {
     return multiplier.multiplier > 0 && multiplier.divider > 0;
 }
@@ -48,6 +59,8 @@ contract SeaweedIDO is Ownable {
     IDO[] private idos;
     mapping(uint256 => mapping(address => uint256)) bought;
     mapping(uint256 => mapping(address => bool)) _beenPaid;
+    Vesting[MAX_VESTING_OCURRENCES][] _vesting;
+    ILockedAmount private _lockingContract;
 
     constructor() {}
 
@@ -63,7 +76,8 @@ contract SeaweedIDO is Ownable {
     function publish(
         string memory tokenName,
         string memory tokenSymbol,
-        IDOParams memory params
+        IDOParams memory params,
+        Vesting[MAX_VESTING_OCURRENCES] calldata vesting
     ) public {
         require(block.timestamp < params.open.end, "would already ended");
         require(
@@ -74,6 +88,7 @@ contract SeaweedIDO is Ownable {
             _isValidMultiplier(params.multiplier),
             "Multiplier isn't valid"
         );
+
         ERC20Entangled token = new ERC20Entangled(tokenName, tokenSymbol);
         uint256 id = idos.length;
         idos.push(IDO(params, msg.sender, 0));
@@ -87,11 +102,40 @@ contract SeaweedIDO is Ownable {
             );
         }
         ido.params.totalBought = 0;
+
+        Vesting[MAX_VESTING_OCURRENCES] storage vest = _vesting.push();
+        for (uint256 i = 0; i < MAX_VESTING_OCURRENCES; i++) {
+            require(
+                vest[i].beneficiary == address(0) ||
+                    vest[i].timestamp >= ido.params.open.end,
+                "Tokens must be vested after the IDO ends"
+            );
+            vest[i] = vesting[i];
+        }
+
         emit IDOPublished(id, ido);
     }
 
     function information(uint256 id) public view returns (IDO memory) {
         return idos[id];
+    }
+
+    function vestingFor(uint256 id)
+        public
+        view
+        returns (Vesting[MAX_VESTING_OCURRENCES] memory vesting)
+    {
+        return _vesting[id];
+    }
+
+    function claimVesting(uint256 id, uint256 index) external {
+        Vesting storage vesting = _vesting[id][index];
+        IDO storage ido = getId(id);
+        require(!vesting.claimed, "Already claimed");
+        require(vesting.timestamp >= block.timestamp);
+        require(ido.owner == msg.sender, "Not IDO Owner");
+        ido.params.token.mint(vesting.beneficiary, vesting.amount);
+        vesting.claimed = true;
     }
 
     /**
@@ -109,17 +153,48 @@ contract SeaweedIDO is Ownable {
     }
 
     /**
+     * @dev Change IPFS hash
+     */
+    function setLockingAddress(address where) public onlyOwner {
+        _lockingContract = ILockedAmount(where);
+    }
+
+    /**
+     * @dev Change IPFS hash
+     */
+    function lockingContract() public view returns (address) {
+        return address(_lockingContract);
+    }
+
+    /**
+     * @dev Returns if the selected address is whitelisted via locking.
+     */
+
+    function whitelisted(uint256 id, address account)
+        public
+        view
+        returns (bool status)
+    {
+        if (_lockingContract == ILockedAmount(address(0))) return true;
+        IDO storage ido = idos[id];
+        if (ido.params.minimumLockedAmount == 0) return true;
+        return (_lockingContract.lockedAmount(account) >=
+            ido.params.minimumLockedAmount);
+    }
+
+    /**
      * @dev Returns if the selected address can buy.
      */
     function canBuy(uint256 id, address account)
-        public
+        private
         view
         returns (bool status)
     {
         IDO storage ido = idos[id];
         return
             (block.timestamp >= ido.params.open.start) &&
-            (block.timestamp < ido.params.open.end);
+            (block.timestamp < ido.params.open.end) &&
+            whitelisted(id, account);
     }
 
     function _availableToBuy(IDO storage ido)
