@@ -7,6 +7,7 @@ import { TokenContextProvider } from './TokenContext';
 import { IDOStatus } from '../utils/types';
 import { rangeToStatus } from '../utils/utils';
 import { IDOContext } from './IDOContext';
+import { NetworkContext } from './NetworkContext';
 
 interface IDOInteractContextInterface {
   status?: IDOStatus,
@@ -31,12 +32,13 @@ export const IDOInteractContext = React.createContext<IDOInteractContextInterfac
 
 
 export const IDOInteractContextProvider: React.FunctionComponent = ({ children }) => {
+  const { network: { SeaweedAddress } } = useContext(NetworkContext)
   const { IDO } = useContext(IDOContext);
-  const { selectedSigner } = useContext(AccountsContext);
+  const { signer, evmAddress } = useContext(AccountsContext);
   const [wei, setWei] = useState<BigNumber>(BigNumber.from(0));
-  let contract = selectedSigner ? IIDO(selectedSigner.signer as any) : undefined;
-  const { execute: balanceExecute, value: balanceValue } = useAsync<any>(() => contract!.boughtAmount(IDO.id, selectedSigner!.evmAddress), false);
-  const { execute: paidExecute, value: paidValue } = useAsync<boolean>(() => contract!.beenPaid(IDO.id, selectedSigner!.evmAddress), false);
+  let contract = signer ? IIDO(SeaweedAddress, signer) : undefined;
+  const { execute: balanceExecute, value: balanceValue } = useAsync<any>(() => contract!.boughtAmount(IDO.id, evmAddress), false);
+  const { execute: paidExecute, value: paidValue } = useAsync<boolean>(() => contract!.beenPaid(IDO.id, evmAddress), false);
 
   let onBuy = useCallback(async () => {
     await contract!.buy(IDO.id, wei, { value: wei })
@@ -57,18 +59,12 @@ export const IDOInteractContextProvider: React.FunctionComponent = ({ children }
   }, [contract, wei])
 
   useEffect(() => {
-    if (selectedSigner) {
+    if (signer) {
       balanceExecute();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSigner])
-
-  useEffect(() => {
-    if (selectedSigner) {
       paidExecute();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSigner])
+  }, [signer])
 
   useIntervalUpdate();
 

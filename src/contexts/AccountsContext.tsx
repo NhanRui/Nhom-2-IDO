@@ -4,6 +4,7 @@ import { web3Accounts, web3Enable } from '@polkadot/extension-dapp';
 import type { Signer as InjectedSigner } from '@polkadot/api/types';
 import type { InjectedAccountWithMeta, InjectedExtension } from '@polkadot/extension-inject/types';
 import { Provider, Signer } from '@reef-defi/evm-provider';
+import { Signer as EtherSigner } from "ethers";
 import { ensure } from '../utils/utils';
 import { NetworkContext } from './NetworkContext';
 import { AccountSigner } from '../utils/types';
@@ -14,12 +15,17 @@ interface AccountsContextInterface {
   signers?: AccountSigner[],
   selectedSigner?: AccountSigner,
   setSelectedSigner: React.Dispatch<React.SetStateAction<AccountSigner | undefined>>,
-  onConnect: () => any
+  signer?: EtherSigner
+  evmAddress?: string;
+  isEvmClaimed?: boolean;
+  onConnect: () => any;
+  refreshAccounts: () => void;
 }
 
 export const AccountsContext = React.createContext<AccountsContextInterface>({
   setSelectedSigner: () => { },
-  onConnect: () => { }
+  onConnect: () => { },
+  refreshAccounts: () => { }
 });
 
 export const accountToSigner = async (account: InjectedAccountWithMeta, provider: Provider, sign: InjectedSigner): Promise<AccountSigner> => {
@@ -82,13 +88,21 @@ export const AccountsContextProvider: React.FunctionComponent = ({ children }) =
     load();
   }, [provider, accounts, injected])
 
+  const refreshAccounts = () => {
+    setAccounts([...accounts!])
+  }
+
   return <AccountsContext.Provider value={
     {
       accounts,
       signers,
       selectedSigner,
       setSelectedSigner,
-      onConnect
+      onConnect,
+      refreshAccounts,
+      signer: selectedSigner?.signer as EtherSigner,
+      evmAddress: selectedSigner?.evmAddress,
+      isEvmClaimed: selectedSigner?.isEvmClaimed
     }} >
     {children}
   </AccountsContext.Provider >

@@ -18,24 +18,26 @@ interface IDOContextInterface {
 let defaultIPFS: IPFSIDO = {
   title: "Title not found",
   description: "",
-  subtitle: ""
+  subtitle: "",
+  logo: "",
+  background: ""
 }
 
 export const IDOContext = React.createContext<IDOContextInterface>({} as IDOContextInterface);
 
 export const IDOContextProvider: React.FunctionComponent<{ id: number, onLoading?: React.ReactElement, loadVesting?: boolean, whitelisting?: boolean }> = ({ children, id, onLoading = null, loadVesting }) => {
   const { IDOs, ipfsMap } = useContext(IDOsContext);
-  const { provider } = useContext(NetworkContext);
-  const { selectedSigner } = useContext(AccountsContext);
-  const { value: vesting } = useAsync<Vesting[]>(() => IIDO(provider).vestingFor(id), loadVesting && (IDOs !== undefined))
-  const { value: whitelisted, execute: executeWhitelisted } = useAsync<boolean>(() => IIDO(provider).whitelisted(id, selectedSigner!.evmAddress), false);
+  const { provider, network: { SeaweedAddress } } = useContext(NetworkContext);
+  const { signer, evmAddress } = useContext(AccountsContext);
+  const { value: vesting } = useAsync<Vesting[]>(() => IIDO(SeaweedAddress, provider).vestingFor(id), loadVesting && (IDOs !== undefined))
+  const { value: whitelisted, execute: executeWhitelisted } = useAsync<boolean>(() => IIDO(SeaweedAddress, provider).whitelisted(id, evmAddress), false);
 
   useEffect(() => {
-    if (selectedSigner) {
+    if (signer) {
       executeWhitelisted();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSigner])
+  }, [signer])
 
   let IDO
   if (IDOs !== undefined && IDOs[id]) {

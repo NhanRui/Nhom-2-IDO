@@ -1,8 +1,8 @@
 
 import { Provider } from '@reef-defi/evm-provider';
+import { getBytes32FromMultiash } from "ipfs-multihash-on-solidity";
 import { AccountSigner, PublishValues, VestingForm } from '../utils/types';
 import { ensure, ratioToMulDiv } from './utils';
-import BN from "bn.js"
 import { utils } from "ethers";
 import { MAX_VESTING_OCURRENCES } from '../abis/contracts';
 
@@ -44,36 +44,6 @@ export const ClaimEvmTx: TxType = {
     const hasEvmAddress = await signer.signer.isClaimed();
     ensure(!hasEvmAddress, 'Account already has EVM address!');
     await signer.signer.claimDefaultAccount();
-  }
-}
-
-export const TransferTx: TxType = {
-  title: "Transfer REEF",
-  fields: [
-    {
-      name: "address",
-      type: FieldType.Address
-    },
-    {
-      name: "quantity",
-      type: FieldType.Amount
-    }
-  ],
-  action: async ({ signer, provider, params: { quantity, address } }) => {
-    let q = new BN((parseFloat(quantity) * 1e5).toFixed(0)).mul(new BN("10000000000000"));
-    let unsub = await provider.api.tx.balances
-      .transfer(address, q)
-      .signAndSend(signer.address, ({ events = [], status }) => {
-        console.log(`Current status is ${status.type}`);
-        if (status.isFinalized) {
-          console.log(`Transaction included at blockHash ${status.asFinalized}`);
-          events.forEach(({ phase, event: { data, method, section } }) => {
-            console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
-          });
-
-          unsub();
-        }
-      });
   }
 }
 
@@ -213,6 +183,8 @@ export const WithdrawTX: TxType = {
 
 let timestampFromDate = (date: Date) => Math.floor(date.valueOf() / 1000);
 
+let defaultIPFS = getBytes32FromMultiash("QmVweXv2jnLGsQWixDAeHb8NqPzcZFWYfjDtaunhrqRkMJ")
+
 export const ContractBasicIDOAction = async (contract: any, { tokenName, tokenSymbol, reefAmount, reefMultiplier, reefMaxPerAddress, swdWhitelisting, start, end }: PublishValues, vesting: VestingForm[]) => {
   let [mul, div] = ratioToMulDiv(reefMultiplier);
 
@@ -237,7 +209,7 @@ export const ContractBasicIDOAction = async (contract: any, { tokenName, tokenSy
       true,
       "0x0000000000000000000000000000000000000000",
       [mul, div],
-      ["0x65b57eb7111c51b539ee694a5dd5f893e3f1ae4f7d47b6c31fb5903c9c8e7141", 18, 32],
+      defaultIPFS,
       [timestampFromDate(new Date(start)), timestampFromDate(new Date(end))],
       utils.parseEther(swdWhitelisting.toString()),
       utils.parseEther(reefAmount.toString()),

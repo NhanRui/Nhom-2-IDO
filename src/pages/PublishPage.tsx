@@ -6,6 +6,7 @@ import { IIDO, MAX_VESTING_OCURRENCES } from "../abis/contracts";
 import { FieldRenderer } from "../components/FieldRenderer";
 import { VestingFormComponent } from "../components/VestingFormComponent";
 import { AccountsContext } from "../contexts/AccountsContext";
+import { NetworkContext } from "../contexts/NetworkContext";
 import { ContractBasicIDOAction } from "../utils/txFactorys";
 import { PublishValues, VestingForm } from "../utils/types";
 
@@ -28,11 +29,12 @@ const initialValues: PublishValues = {
 }
 
 export const PublishPage = () => {
+  const { network: { SeaweedAddress } } = useContext(NetworkContext)
   const [vesting, setVesting] = useState<VestingForm[]>([])
   const toast = useToast();
-  let { selectedSigner } = useContext(AccountsContext)
+  let { signer } = useContext(AccountsContext)
   const addVesting = () => {
-    if (vesting.length >= MAX_VESTING_OCURRENCES) return;
+    if (vesting.filter(el => !!el).length >= MAX_VESTING_OCURRENCES) return;
     setVesting([...vesting, { beneficiary: "", amount: 0, timestamp: "" }])
   }
   return <Stack spacing={2}>
@@ -41,7 +43,7 @@ export const PublishPage = () => {
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={async (values, actions) => {
-        await ContractBasicIDOAction(IIDO(selectedSigner!.signer as any), values, vesting);
+        await ContractBasicIDOAction(IIDO(SeaweedAddress, signer!), values, vesting.filter(el => !!el));
         toast({
           title: "IDO published.",
           description: "Hooray 🥳! Your IDO has been published successfully.",
@@ -98,7 +100,7 @@ export const PublishPage = () => {
               helper={"All times are in local time"}
             />
             <FieldRenderer
-              title={"Crowdsale start"}
+              title={"Crowdsale end"}
               name={"end"}
               type={"datetime-local"}
               helper={"All times are in local time"}
@@ -106,8 +108,8 @@ export const PublishPage = () => {
             <Stack direction={"row"} justifyContent={"space-between"} alignItems={"center"}>
               <Heading size={"lg"}>Vesting</Heading><Button onClick={addVesting}>Add</Button>
             </Stack>
-            {vesting.map((e, index) => <VestingFormComponent key={index} id={index} setVesting={setVesting} />)}
-            <Button type={"submit"} isFullWidth marginTop={"32px !important"} disabled={isSubmitting}>Publish Contract</Button>
+            {vesting.map((e, index) => e === null ? null : <VestingFormComponent key={index} id={index} setVesting={setVesting} />)}
+            <Button type={"submit"} isFullWidth marginTop={"32px !important"} disabled={isSubmitting || (signer === undefined)}>Publish Contract</Button>
           </Stack>
         </Form>
       }}
