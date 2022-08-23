@@ -1,1 +1,1 @@
-declare module 'ipfs-multihash-on-solidity';
+// declare module 'ipfs-multihash-on-solidity';

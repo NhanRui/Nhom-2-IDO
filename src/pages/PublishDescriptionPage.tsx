@@ -7,7 +7,7 @@ import { IIDO } from "../abis/contracts";
 import { FieldRenderer } from "../components/FieldRenderer";
 import { AccountsContext } from "../contexts/AccountsContext";
 import { IDOContext, IDOContextProvider } from "../contexts/IDOContext";
-import { IPFSClient } from "../utils/ipfsClient";
+import { IPFSClientApiEndpoint } from "../utils/ipfsClient";
 import { getBytes32FromMultiash } from "ipfs-multihash-on-solidity";
 import { IPFSIDO, PublishValues } from "../utils/types";
 import { NetworkContext } from "../contexts/NetworkContext";
@@ -49,7 +49,8 @@ const ImageRenderer: FunctionComponent<{ title: string, helper: string, value: s
   const onChange = async (e: any) => {
     const file = e.target.files[0]
     try {
-      const { path } = await IPFSClient.add(file)
+      const { path } = await IPFSClientApiEndpoint.add(file)
+      console.log('path', path);
       setValue(path);
     } catch (error) {
       console.log('Error uploading file: ', error)
@@ -69,7 +70,7 @@ const TextAreaRenderer: FunctionComponent<{ title: string, name: string, type?: 
       ({ field, meta }: any) => (
         <FormControl isRequired id={field.id} isInvalid={meta.touched && meta.error}>
           <FormLabel htmlFor={field.id}>{title}</FormLabel>
-          <Textarea {...field} type={type} placeholder={placeholder} />
+          <Textarea {...field} type={type} placeholder={placeholder} rows={6}/>
           {meta.touched && meta.error && (
             <FormErrorMessage>{meta.error}</FormErrorMessage>
           )}
@@ -111,7 +112,6 @@ const FormikFormComponent: FunctionComponent<FormikProps<PublishValues>> = ({ is
       value={background}
       setValue={setBackground}
     />
-    960 x 540
     <Button type={"submit"} isFullWidth marginTop={"32px !important"} disabled={isSubmitting || !signer}>Upload description</Button>
   </Form>
 }
@@ -128,7 +128,7 @@ const DescriptionForm = () => {
       initialValues={ipfs}
       validationSchema={validationSchema}
       onSubmit={async (values, actions) => {
-        const { path } = await IPFSClient.add(JSON.stringify({ ...values, logo, background }))
+        const { path } = await IPFSClientApiEndpoint.add(JSON.stringify({ ...values, logo, background }))
         await IIDO(SeaweedAddress, signer!).setIPFS(IDO.id, getBytes32FromMultiash(path));
         toast({
           title: "IDO Description updated.",
@@ -147,6 +147,10 @@ const DescriptionForm = () => {
 
 export const PublishDescriptionPage = () => {
   let { id } = useParams<{ id: string }>();
-  return <IDOContextProvider id={parseInt(id)}><PublishFilesContextProvider><DescriptionForm /></PublishFilesContextProvider></IDOContextProvider>;
+  return <IDOContextProvider id={parseInt(id)}>
+    <PublishFilesContextProvider>
+      <DescriptionForm />
+    </PublishFilesContextProvider>
+  </IDOContextProvider>;
 
 }

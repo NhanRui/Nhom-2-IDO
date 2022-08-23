@@ -33,16 +33,6 @@ contract Locking is ILockedAmount, Ownable {
         return (_lockedAmount[owner], _lockedUntil[owner]);
     }
 
-    function claimVesting(uint256 id, uint256 index) external {
-        Vesting storage vesting = _vesting[id][index];
-        IDO storage ido = getId(id);
-        require(!vesting.claimed, "Already claimed");
-        require(vesting.timestamp >= block.timestamp);
-        require(ido.owner == msg.sender, "Not IDO Owner");
-        ido.params.token.mint(vesting.beneficiary, vesting.amount);
-        vesting.claimed = true;
-    }
-
     function lockedAmount(address owner)
         external
         view
@@ -67,18 +57,6 @@ contract Locking is ILockedAmount, Ownable {
         emit Withdraw(msg.sender, amount);
     }
 
-    /**
-     * @dev Withdraws the amount, Fails on unsuccessful tx.
-     */
-    function withdraw(uint256 id, uint256 amount) public {
-        IDO storage ido = getId(id);
-        require(bought[id][msg.sender] >= amount, "Not enough bought");
-        bought[id][msg.sender] -= amount;
-        ido.params.totalBought -= amount;
-        payable(msg.sender).transfer(amount);
-        emit Withdrawn(id, msg.sender, amount, ido.params.totalBought);
-    }
-    
     function setLockTime(uint256 amount) public onlyOwner {
         _lockedTime = amount;
     }

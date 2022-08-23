@@ -19,15 +19,15 @@ export const IDOsContext = React.createContext<IDOsContextInterface>({ ipfsMap: 
 
 const errorFetching: IPFSIDO = {
   title: "Title unreachable",
-  subtitle: "",
-  description: "",
+  subtitle: "Default subtitle",
+  description: "Default description",
   logo: "",
   background: ""
 }
 
 const IPFSFetch = async (ipfs: string): Promise<IPFSIDO> => {
   try {
-    let page = await fetch(`https://ipfs.infura.io/ipfs/${ipfs}`)
+    let page = await fetch(`https://seaweed.infura-ipfs.io/ipfs/${ipfs}`)
     return await page.json()
   } catch {
     return errorFetching
@@ -90,6 +90,7 @@ export const IDOsContextProvider: React.FunctionComponent = ({ children }) => {
     let length = ((await contract.idosLength()) as BigNumber).toNumber();
     let IDOsInfo = await Promise.all(Array.from(Array(length).keys()).map((id): Promise<IDO> => contract.information(id)))
     let ipfsKeys = IDOsInfo.map(ido => getMultihashFromBytes32(ido.params.ipfs)).filter(onlyUnique);
+    console.log('ipfsKeys',ipfsKeys);
     IDOsInfo = IDOsInfo.map((ori, id) => ({ ...ori, id }));
     await Promise.all(
       ipfsKeys.map(
