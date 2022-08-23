@@ -34,12 +34,31 @@ const MyIDO: FunctionComponent = () => {
     IIDO(SeaweedAddress, signer).getRaised(IDO.id)
   }
 
-  return <Stack direction={"row"} spacing={4}>
-    <Heading size={"md"} flexGrow={1}>{ipfs.title}</Heading>
-    <Tag size={"md"} variant="outline">{IDOStatus[status]}</Tag>
-    <Button disabled={status !== IDOStatus.Pending} onClick={() => push(`/publish/${IDO.id}/description`)}>Edit Description</Button>
-    <Button disabled={status !== IDOStatus.Ended} onClick={getRaised}>Get Raised REEF</Button>
+  return <Stack border={"1px"} borderColor={"app.400"} borderRadius={8} spacing={4} padding={4} onClick={() => push(`/projects/${id}`)}>
+  <Stack direction={"row"} spacing={4}>
+    <Image height={"48px"} src={`https://ipfs.infura.io/ipfs/${logo}`} alt="Project logo" />
+    <Stack justifyContent={"space-between"} spacing={0}>
+      <Heading size={"md"}>{title}</Heading>
+      <Text>{subtitle}</Text>
+    </Stack>
   </Stack>
+  <Box borderTop={"1px"} borderBottom={"1px"} borderColor={"app.600"} bg={"app.100"} backgroundSize={"cover"} backgroundImage={`url("https://ipfs.infura.io/ipfs/${background}")`}>
+    <Stack width={"100%"} height={140} padding={2} direction={"row"} alignItems={"flex-start"} justifyContent={"flex-end"}>
+      {whitelisted !== undefined && (whitelisted ? whitelistedEl : whitelistedntEl)}
+    </Stack>
+  </Box>
+  <Stack direction={"row"} justifyContent={"space-between"}>
+    <Text>Raise goal</Text>
+    <Text>{utils.formatEther(baseAmount)} REEF</Text>
+  </Stack>
+  <Stack direction={"row"} justifyContent={"space-between"}>
+    <Text>Max allocation</Text>
+    <Text>{utils.formatEther(maxAmountPerAddress)} REEF</Text>
+  </Stack>
+  <Box border={"1px"} borderColor={"app.600"} borderRadius={8} bg={"app.100"}>
+    <Box width={`${totalBought.mul(10000).div(baseAmount).toNumber() / 100}%`} bg={"app.600"} height={2} />
+  </Box>
+</Stack >
 }
 
 let alertAccount = <Alert status="info" variant="subtle">
